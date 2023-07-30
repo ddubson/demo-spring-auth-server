@@ -7,3 +7,5 @@ build
 .idea/
 
 out/
+
+http-client.private.env.json

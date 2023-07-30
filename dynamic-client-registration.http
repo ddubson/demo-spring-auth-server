@@ -1,0 +1,42 @@
+### Fetch access token (create)
+POST {{host}}/oauth2/token HTTP/1.1
+Authorization: Basic {{creds}}
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials&scope=client.create
+
+> {% client.global.set("dcr_create_auth_token", response.body.access_token); %}
+
+### Register client
+POST {{host}}/connect/register HTTP/1.1
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{dcr_create_auth_token}}
+
+{
+  "client_name": "My Example",
+  "grant_types": [
+    "authorization_code",
+    "client_credentials",
+    "refresh_token"
+  ],
+  "scope": "openid profile email",
+  "redirect_uris": [
+    "https://client.example.org/callback",
+    "https://client.example.org/callback2"
+  ],
+  "token_endpoint_auth_method": "client_secret_basic",
+  "post_logout_redirect_uris": [
+    "https://client.example.org/logout"
+  ]
+}
+
+> {%
+    client.global.set("reg_client_uri", response.body.registration_client_uri);
+    client.global.set("reg_access_token", response.body.registration_access_token);
+%}
+
+### Fetch registered client
+GET {{reg_client_uri}}
+Authorization: Bearer {{reg_access_token}}
+Accept: application/json

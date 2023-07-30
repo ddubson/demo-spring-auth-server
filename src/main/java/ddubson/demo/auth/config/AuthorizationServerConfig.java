@@ -113,7 +113,10 @@ public class AuthorizationServerConfig {
 			)
 			.authorizationEndpoint(authorizationEndpoint ->
 				authorizationEndpoint.consentPage(CUSTOM_CONSENT_PAGE_URI))
-			.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
+			.oidc(oidc -> {
+				// Enable Dynamic Client Registration
+				oidc.clientRegistrationEndpoint(Customizer.withDefaults());
+			});	// Enable OpenID Connect 1.0
 		// @formatter:on
 
 		// @formatter:off
@@ -159,10 +162,21 @@ public class AuthorizationServerConfig {
 				.scope("message.write")
 				.build();
 
+		// A client for use by Dynamic Client Registration
+		RegisteredClient initialClient = RegisteredClient.withId(UUID.randomUUID().toString())
+				.clientId("initial-client")
+				.clientSecret("{noop}secret2")
+				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+				.scope("client.create")
+				.scope("client.read")
+				.build();
+
 		// Save registered client's in db as if in-memory
 		JdbcRegisteredClientRepository registeredClientRepository = new JdbcRegisteredClientRepository(jdbcTemplate);
 		registeredClientRepository.save(registeredClient);
 		registeredClientRepository.save(deviceClient);
+		registeredClientRepository.save(initialClient);
 
 		return registeredClientRepository;
 	}

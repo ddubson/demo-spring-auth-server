@@ -1,8 +1,14 @@
-# Demo Spring Authorization Server
+# 🏰Spring Authorization Server Demo
 
-Based on https://github.com/spring-projects/spring-authorization-server
+A live example of an implementation of Spring Authorization Server, based on https://github.com/spring-projects/spring-authorization-server
 
-## Operation
+> **WARNING** this project does not use secure configuration methods -- only demonstrates features. 
+
+## Features
+
+- ✅ OpenID Connect Dynamic Client Registration 1.0
+
+## 🚚 Operation
 
 To run locally,
 
