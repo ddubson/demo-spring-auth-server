@@ -113,10 +113,10 @@ public class AuthorizationServerConfig {
 			)
 			.authorizationEndpoint(authorizationEndpoint ->
 				authorizationEndpoint.consentPage(CUSTOM_CONSENT_PAGE_URI))
-			.oidc(oidc -> {
+			.oidc(oidc -> { // Enable OpenID Connect 1.0
 				// Enable Dynamic Client Registration
 				oidc.clientRegistrationEndpoint(Customizer.withDefaults());
-			});	// Enable OpenID Connect 1.0
+			});
 		// @formatter:on
 
 		// @formatter:off
