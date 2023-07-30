@@ -7,7 +7,7 @@ A live example of an implementation of Spring Authorization Server, based on htt
 > **Warning**
 > This project does not use secure configuration methods -- only demonstrates features. Please use caution when referencing material contained in this repository.
 
-## Features
+## ⭐️ Features
 
 - ✅ OpenID Connect Dynamic Client Registration 1.0
   - Use file `./dynamic-client-registration.http` as an example walkthrough
