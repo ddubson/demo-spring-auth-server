@@ -15,12 +15,16 @@
  */
 package ddubson.demo.auth.config;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import ddubson.demo.auth.authentication.CustomClientRegistrationConverter;
+import ddubson.demo.auth.authentication.CustomRegisteredClientConverter;
 import ddubson.demo.auth.authentication.DeviceClientAuthenticationProvider;
 import ddubson.demo.auth.federation.FederatedIdentityIdTokenCustomizer;
 import ddubson.demo.auth.jose.Jwks;
@@ -35,6 +39,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -50,6 +55,8 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcClientConfigurationAuthenticationProvider;
+import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcClientRegistrationAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
@@ -57,13 +64,6 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
-
-/**
- * @author Joe Grandja
- * @author Daniel Garnier-Moiroux
- * @author Steve Riesenberg
- * @since 1.1
- */
 @Configuration(proxyBeanMethods = false)
 public class AuthorizationServerConfig {
 	private static final String CUSTOM_CONSENT_PAGE_URI = "/oauth2/consent";
@@ -115,7 +115,9 @@ public class AuthorizationServerConfig {
 				authorizationEndpoint.consentPage(CUSTOM_CONSENT_PAGE_URI))
 			.oidc(oidc -> { // Enable OpenID Connect 1.0
 				// Enable Dynamic Client Registration
-				oidc.clientRegistrationEndpoint(Customizer.withDefaults());
+				oidc.clientRegistrationEndpoint(c -> {
+					c.authenticationProviders(configureRegisteredClientConverters());
+				});
 			});
 		// @formatter:on
 
@@ -131,6 +133,30 @@ public class AuthorizationServerConfig {
 				oauth2ResourceServer.jwt(Customizer.withDefaults()));
 		// @formatter:on
 		return http.build();
+	}
+
+	private Consumer<List<AuthenticationProvider>> configureRegisteredClientConverters() {
+		// List of custom client metadata that is accepted during dynamic client registration
+		List<String> customClientMetadata = List.of("logo_uri");
+
+		// @formatter:off
+		return (authenticationProviders) ->
+				authenticationProviders.forEach(authenticationProvider -> {
+					CustomClientRegistrationConverter clientRegistrationConverter = new CustomClientRegistrationConverter(customClientMetadata);
+					CustomRegisteredClientConverter registeredClientConverter = new CustomRegisteredClientConverter(customClientMetadata);
+
+					// Ensure that custom metadata is accepted and returned during registration
+					if (authenticationProvider instanceof OidcClientRegistrationAuthenticationProvider provider) {
+						provider.setRegisteredClientConverter(registeredClientConverter);
+						provider.setClientRegistrationConverter(clientRegistrationConverter);
+					}
+
+					// Ensure that custom metadata is returned when fetching registered clients
+					if (authenticationProvider instanceof OidcClientConfigurationAuthenticationProvider provider) {
+						provider.setClientRegistrationConverter(clientRegistrationConverter);
+					}
+				});
+		// @formatter:on
 	}
 
 	// @formatter:off
