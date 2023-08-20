@@ -1,5 +1,5 @@
 server:
-  port: 9000
+  port: 8080
 
 spring:
   security:
@@ -23,6 +23,9 @@ spring:
             user-name-attribute: email
           github:
             user-name-attribute: login
+      resourceserver:
+        jwt:
+          issuer-uri: http://127.0.0.1:8080 # reference self as the issuer-uri
 
 logging:
   level:
